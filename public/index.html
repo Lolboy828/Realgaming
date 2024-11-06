@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RStudios - Home</title>
+    <link rel="stylesheet" href="css/design.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <meta property="og:title" content="RStudios">
+    <meta property="og:description" content="RStudios. The Future of Roblox Condo Games">
+    <meta property="og:url" content="#">
+</head>
+<body>
+  <div class="container">
+    <h1>RStudios</h1>
+    <div class="links">
+        <a href="#">Home</a>
+        <a href="#">Info</a>
+        <a href="#">Shop</a>
+        <a href="#">Temp</a>
+
+
+    </div>
+    <div class="example">
+      <input type="text" id="keyBox" readonly placeholder="Generated key will appear here">
+  </div>
+</div>
+<canvas id="canvas"></canvas>
+<script src="js/design.js"></script>
+  <script src="js/animations.js"></script>
+
+ 
+  <button onclick="fetchKey()">Get Key</button>
+
+  <script>
+    async function fetchKey() {
+      const response = await fetch('/get-key');
+      const data = await response.json();
+      document.getElementById('keyBox').value = data.key;
+    }
+
+    fetchKey();
+  </script>
+
+</body>
+</html>
