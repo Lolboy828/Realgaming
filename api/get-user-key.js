@@ -25,7 +25,7 @@ function generateKey() {
   return key;
 }
 
-// Store user keys in MongoDB (without duplicate)
+// Store user keys in MongoDB (without duplicates)
 async function storeUserKey(userId, key) {
   try {
     await client.connect();
@@ -51,6 +51,30 @@ async function storeUserKey(userId, key) {
 
 // API to get the current key and check if it's time for a new one
 module.exports = async (req, res) => {
+  const userId = req.query.userId;
+  
+  // If a userId is provided, return that user’s key
+  if (userId) {
+    try {
+      await client.connect();
+      const db = client.db('key-db');
+      const usersCollection = db.collection('users');
+
+      const user = await usersCollection.findOne({ userId });
+      if (user) {
+        return res.status(200).json({ userId: userId, key: user.key });
+      } else {
+        return res.status(404).json({ message: "User key not found" });
+      }
+    } catch (error) {
+      console.error("Error retrieving user key:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    } finally {
+      await client.close();
+    }
+  }
+
+  // If no userId is provided, return the current key
   if (Date.now() - lastGenerated >= 604800000) { // 1 week in ms
     currentKey = generateKey();
     lastGenerated = Date.now();
@@ -83,52 +107,11 @@ async function updateAllUserKeys(newKey) {
   }
 }
 
-// Fetch user ID based on username
-async function getUserId(username) {
-  try {
-    const response = await axios.post('https://users.roblox.com/v1/usernames/users', {
-      usernames: [username],
-      excludeBannedUsers: true,
-    });
-    const userData = response.data.data;
-    return userData.length > 0 ? userData[0].id : null;
-  } catch (error) {
-    console.error("Error fetching user ID:", error);
-    return null;
-  }
-}
-
 // Store key for a specific user
-async function storeKeyForUser(username) {
-  const userId = await getUserId(username);
-  if (userId) {
-    await storeUserKey(userId, currentKey);
-  }
+async function storeKeyForUser(userId) {
+  await storeUserKey(userId, currentKey);
 }
 
 // Example usage: Store the current key for a specific user
-//storeKeyForUser("Highdr0p");
+//storeKeyForUser("832525972");
 
-// Endpoint to get a user's key based on their userId
-module.exports.getUserKey = async (req, res) => {
-  const userId = req.params.userId;
-  
-  try {
-    await client.connect();
-    const db = client.db('key-db');
-    const usersCollection = db.collection('users');
-    
-    const user = await usersCollection.findOne({ userId: userId });
-    
-    if (user) {
-      res.status(200).json({ key: user.key, userId: user.userId });
-    } else {
-      res.status(404).json({ message: 'User not found' });
-    }
-  } catch (error) {
-    console.error("Error fetching user key:", error);
-    res.status(500).json({ message: 'Internal server error' });
-  } finally {
-    await client.close();
-  }
-};
