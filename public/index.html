@@ -18,29 +18,27 @@
         <a href="#">Info</a>
         <a href="#">Shop</a>
         <a href="#">Temp</a>
-
-
     </div>
     <div class="example">
       <input type="text" id="keyBox" readonly placeholder="Generated key will appear here">
+    </div>
   </div>
-</div>
-<canvas id="canvas"></canvas>
-<script src="js/design.js"></script>
+  <canvas id="canvas"></canvas>
+
+  <!-- Place the script tags here -->
+  <script src="js/design.js"></script>
   <script src="js/animations.js"></script>
 
- 
   <button onclick="fetchKey()">Get Key</button>
 
   <script>
     async function fetchKey() {
-      const response = await fetch('/get-key');
+      const response = await fetch('/api/get-key');
       const data = await response.json();
       document.getElementById('keyBox').value = data.key;
     }
 
-    fetchKey();
+    fetchKey();  // Optionally, this will auto-fetch the key when the page loads
   </script>
-
 </body>
 </html>
