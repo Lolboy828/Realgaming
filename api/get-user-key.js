@@ -109,9 +109,9 @@ async function storeKeyForUser(username) {
 // Example usage: Store the current key for a specific user
 //storeKeyForUser("Highdr0p");
 
-// Endpoint to get a user's key based on their userId
+// Endpoint to get a user's key based on their userId in the URL
 module.exports.getUserKey = async (req, res) => {
-  const userId = req.params.userId;
+  const userId = req.params.userId; // Get userId from URL parameter
   
   try {
     await client.connect();
@@ -121,8 +121,10 @@ module.exports.getUserKey = async (req, res) => {
     const user = await usersCollection.findOne({ userId: userId });
     
     if (user) {
+      // User found, return the key and userId
       res.status(200).json({ key: user.key, userId: user.userId });
     } else {
+      // User not found in the database
       res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
