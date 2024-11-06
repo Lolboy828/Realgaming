@@ -9,36 +9,42 @@
     <meta property="og:title" content="RStudios">
     <meta property="og:description" content="RStudios. The Future of Roblox Condo Games">
     <meta property="og:url" content="#">
-</head>
-<body>
-  <div class="container">
-    <h1>RStudios</h1>
-    <div class="links">
+  </head>
+  <body>
+    <div class="container">
+      <h1>RStudios</h1>
+      <div class="links">
         <a href="#">Home</a>
         <a href="#">Info</a>
         <a href="#">Shop</a>
         <a href="#">Temp</a>
+      </div>
+
+      <div class="username-section">
+        <input type="text" id="username" placeholder="Enter username" />
+        <button onclick="submitUsername()">Submit</button>
+      </div>
+
     </div>
-    <div class="example">
-      <input type="text" id="keyBox" readonly placeholder="Generated key will appear here">
-    </div>
-  </div>
-  <canvas id="canvas"></canvas>
+    
+    <canvas id="canvas"></canvas>
 
-  <!-- Place the script tags here -->
-  <script src="js/design.js"></script>
-  <script src="js/animations.js"></script>
+    <script src="js/design.js"></script>
+    <script src="js/animations.js"></script>
 
-  <button onclick="fetchKey()">Get Key</button>
-
-  <script>
-    async function fetchKey() {
-      const response = await fetch('/api/get-key');
-      const data = await response.json();
-      document.getElementById('keyBox').value = data.key;
-    }
-
-    fetchKey();  // Optionally, this will auto-fetch the key when the page loads
-  </script>
-</body>
+    <script>
+      async function submitUsername() {
+        const username = document.getElementById('username').value;
+        if (username) {
+          // You can now handle the username input as needed, for example, send it to the server
+          console.log("Username submitted: ", username);
+          
+          // Optionally, call an API or take other actions here with the username
+          await fetchKey();
+        } else {
+          alert('Please enter a username');
+        }
+      }
+    </script>
+  </body>
 </html>
