@@ -17,7 +17,7 @@ function generateKey() {
   return key;
 }
 
-function createLootRedirectLink(key) {
+async function createLootRedirectLink(key) {
   const url = 'https://be.lootlabs.gg/api/lootlabs/content_locker';
   const headers = {
     Authorization: 'Bearer 13d2e09b86334c6e84e75b26adb786d571a8653bb05566f81d17f350fddc54fb'
@@ -32,12 +32,15 @@ function createLootRedirectLink(key) {
     thumbnail: "https://cdn.discordapp.com/icons/1297643917885571165/78d69b1fd641a76bf6333ad918740b02.webp?size=1024&format=webp&width=640&height=640"
   };
 
-  axios.post(url, data, { headers })
-    .then(response => console.log(response.data))
-    .catch(error => console.error('Error:', error));
+  try {
+    const response = await axios.post(url, data, { headers });
+    console.log(response.data);
+  } catch (error) {
+    console.error('Error:', error);
+  }
 }
 
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
   const now = Date.now();
 
   if (now - lastGenerated >= 1800000) { // Regenerate key every 30 minutes
@@ -45,5 +48,5 @@ module.exports = (req, res) => {
     lastGenerated = now;
   }
 
-  res.json({ key: currentKey });
+  res.status(200).json({ key: currentKey });
 };
