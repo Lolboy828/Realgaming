@@ -83,36 +83,14 @@ async function updateAllUserKeys(newKey) {
   }
 }
 
-// Fetch user ID based on username
-async function getUserId(username) {
-  try {
-    const response = await axios.post('https://users.roblox.com/v1/usernames/users', {
-      usernames: [username],
-      excludeBannedUsers: true,
-    });
-    const userData = response.data.data;
-    return userData.length > 0 ? userData[0].id : null;
-  } catch (error) {
-    console.error("Error fetching user ID:", error);
-    return null;
-  }
-}
-
-// Store key for a specific user
-async function storeKeyForUser(username) {
-  const userId = await getUserId(username);
-  if (userId) {
-    await storeUserKey(userId, currentKey);
-  }
-}
-
-// Example usage: Store the current key for a specific user
-//storeKeyForUser("Highdr0p");
-
 // Endpoint to get a user's key based on their userId in the URL
-module.exports.getUserKey = async (req, res) => {
-  const userId = req.params.userId; // Get userId from URL parameter
+module.exports = async (req, res) => {
+  const userId = req.query.userId; // Get userId from query parameter
   
+  if (!userId) {
+    return res.status(400).json({ message: 'userId parameter is required' });
+  }
+
   try {
     await client.connect();
     const db = client.db('key-db');
