@@ -1,14 +1,5 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
-
-// MongoDB URI setup
-const uri = "mongodb+srv://miirooz:DEiyaqn3EGPWSjPG45hTUJa1dhEgQ9Fx@key-db.7u2jo.mongodb.net/?retryWrites=true&w=majority&appName=Key-DB";
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
+const fs = require('fs');
+const path = require('path');
 
 // Serverless function
 module.exports = async (req, res) => {
@@ -22,14 +13,13 @@ module.exports = async (req, res) => {
   }
 
   try {
-    console.log('Connecting to database...');
-    await client.connect();
-    console.log('Connected to database');
-    const db = client.db('key-db');
-    const usersCollection = db.collection('users');
-    
+    console.log('Reading users from local file...');
+    const filePath = path.join(__dirname, 'users.json');
+    const data = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : '[]';
+    const users = JSON.parse(data);
+
     console.log('Searching for user...');
-    const user = await usersCollection.findOne({ userId: userId });
+    const user = users.find(u => u.userId === userId);
     
     if (user && user.key) {
       console.log('User found:', user);
@@ -39,15 +29,11 @@ module.exports = async (req, res) => {
       res.status(404).json({ message: 'User not found or key not set' });
     }
 
-    // Fetch and print all users in the collection
-    const allUsers = await usersCollection.find().toArray();
-    console.log('All users in the database:', allUsers);
+    // Print all users
+    console.log('All users:', users);
 
   } catch (error) {
     console.error("Error fetching user key:", error);
     res.status(500).json({ message: 'Internal server error' });
-  } finally {
-    console.log('Closing database connection');
-    await client.close();
   }
 };
