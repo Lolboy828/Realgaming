@@ -38,6 +38,11 @@ module.exports = async (req, res) => {
       console.log('User not found or key not set');
       res.status(404).json({ message: 'User not found or key not set' });
     }
+
+    // Fetch and print all users in the collection
+    const allUsers = await usersCollection.find().toArray();
+    console.log('All users in the database:', allUsers);
+
   } catch (error) {
     console.error("Error fetching user key:", error);
     res.status(500).json({ message: 'Internal server error' });
