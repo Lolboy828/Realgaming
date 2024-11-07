@@ -11,10 +11,6 @@ const client = new MongoClient(uri, {
   }
 });
 
-// Key generation setup 
-let currentKey = generateKey();
-let lastGenerated = Date.now();
-
 // Function to generate a random key
 function generateKey() {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -25,48 +21,24 @@ function generateKey() {
   return key;
 }
 
-// Store user keys in MongoDB (without duplicate)
-async function storeUserKey(userId, key) {
+// Store or update user key in MongoDB
+async function storeUserKey(userId) {
   try {
     await client.connect();
     const db = client.db('key-db');
     const usersCollection = db.collection('users');
 
-    // Ensure the key is unique, otherwise, update or insert the key.
-    const existingUser = await usersCollection.findOne({ userId });
-    if (!existingUser || existingUser.key !== key) {
-      await usersCollection.updateOne(
-        { userId: userId },
-        { $set: { key: key } },
-        { upsert: true }
-      );
-      console.log(`Stored key for user ${userId}`);
-    }
+    const newKey = generateKey();
+    await usersCollection.updateOne(
+      { userId: userId },
+      { $set: { key: newKey } },
+      { upsert: true }
+    );
+    console.log(`Stored new key for user ${userId}`);
+    return newKey;
   } catch (error) {
     console.error("Error storing user key:", error);
-  } finally {
-    await client.close();
-  }
-}
-
-// Function to update all users with the new key
-async function updateAllUserKeys(newKey) {
-  try {
-    await client.connect();
-    const db = client.db('key-db');
-    const usersCollection = db.collection('users');
-
-    // Only update if the key is different to avoid redundancy
-    const existingKey = await usersCollection.findOne({});
-    if (!existingKey || existingKey.key !== newKey) {
-      await usersCollection.updateMany(
-        {},
-        { $set: { key: newKey } }
-      );
-      console.log("Updated all user keys with the new key.");
-    }
-  } catch (error) {
-    console.error("Error updating all user keys:", error);
+    throw error;
   } finally {
     await client.close();
   }
@@ -91,13 +63,6 @@ async function getUserId(username) {
 module.exports = async (req, res) => {
   console.log('Received request:', req.url);
 
-  // Check if it's time to generate a new key
-  if (Date.now() - lastGenerated >= 604800000) { // 1 week in ms
-    currentKey = generateKey();
-    lastGenerated = Date.now();
-    await updateAllUserKeys(currentKey);
-  }
-
   // Handle different routes
   if (req.url.startsWith('/api/getkey')) {
     // Get user key
@@ -118,12 +83,12 @@ module.exports = async (req, res) => {
       console.log('Searching for user...');
       const user = await usersCollection.findOne({ userId: userId });
       
-      if (user) {
+      if (user && user.key) {
         console.log('User found:', user);
         res.status(200).json({ key: user.key, userId: user.userId });
       } else {
-        console.log('User not found');
-        res.status(404).json({ message: 'User not found' });
+        console.log('User not found or key not set');
+        res.status(404).json({ message: 'User not found or key not set' });
       }
     } catch (error) {
       console.error("Error fetching user key:", error);
@@ -133,21 +98,26 @@ module.exports = async (req, res) => {
       await client.close();
     }
   } else if (req.url.startsWith('/api/storekey')) {
-    // Store key for a specific user
+    // Store or update key for a specific user
     const username = req.query.username;
     if (!username) {
       return res.status(400).json({ message: 'Username is required' });
     }
 
-    const userId = await getUserId(username);
-    if (userId) {
-      await storeUserKey(userId, currentKey);
-      res.status(200).json({ message: 'Key stored successfully' });
-    } else {
-      res.status(404).json({ message: 'User not found' });
+    try {
+      const userId = await getUserId(username);
+      if (userId) {
+        const newKey = await storeUserKey(userId);
+        res.status(200).json({ message: 'Key stored successfully', userId: userId, key: newKey });
+      } else {
+        res.status(404).json({ message: 'User not found' });
+      }
+    } catch (error) {
+      console.error("Error storing key:", error);
+      res.status(500).json({ message: 'Internal server error' });
     }
   } else {
-    // Default: return current key
-    res.status(200).json({ key: currentKey });
+    // Invalid route
+    res.status(404).json({ message: 'Invalid route' });
   }
 };
